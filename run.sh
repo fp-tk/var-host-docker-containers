@@ -6,14 +6,16 @@ set -e
 
 readonly FILE_SCRIPT="$(basename "$0")"
 readonly DIR_SCRIPT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-readonly GIT_COMMIT="$(git --git-dir=${DIR_SCRIPT}/.git log -1 --format=%H | cut -c1-8)"
+pushd "${DIR_SCRIPT}" &> /dev/null
+readonly GIT_COMMIT="$(git log -1 --format=%H | cut -c1-8)"
 readonly VARISCITE_REGISTRY="ghcr.io/varigit/var-host-docker-containers/yocto-env"
 
-cd ${DIR_SCRIPT}
+cd "${DIR_SCRIPT}"
+
 
 UBUNTU_VERSIONS_SUPPORTED=("22.04" "20.04" "18.04" "16.04" "14.04")
 UBUNTU_VERSION="20.04"
-WORKDIR=$(pwd)
+WORKDIR="$(pwd)"
 SCRIPT=""
 INTERACTIVE="-it"
 DOCKER_VOLUMES=""
@@ -31,7 +33,7 @@ build_image() {
         echo "${DIR_SCRIPT}/${DOCKERFILE} not found"
         exit -1
     fi
-    docker build ${BUILD_CACHE} -t "${IMAGE_REPO}:${DOCKER_IMAGE}" ${DIR_SCRIPT} -f ${DOCKERFILE}
+    docker build ${BUILD_CACHE} -t "${IMAGE_REPO}:${DOCKER_IMAGE}" "${DIR_SCRIPT}" -f ${DOCKERFILE}
 }
 
 array_contains () {
@@ -48,7 +50,7 @@ array_contains () {
 
 help() {
     echo
-    echo "Usage: ${DIR_SCRIPT}/${FILE_SCRIPT} <options>"
+    echo "Usage: \"${DIR_SCRIPT}\"/${FILE_SCRIPT} <options>"
     echo
     echo " optional:"
     echo " -u --ubuntu-version      Ubuntu Version: ${UBUNTU_VERSIONS_SUPPORTED[@]}"
@@ -139,7 +141,7 @@ parse_args() {
                 ENV_FILE=$2
                 if [ ! -f "${ENV_FILE}" ]; then
                     echo "Error: ${ENV_FILE} Not Found"
-                    echo "Error: ${DIR_SCRIPT}/env/${ENV_FILE} Not Found either"
+                    echo "Error: \"${DIR_SCRIPT}\"/env/${ENV_FILE} Not Found either"
                     help
                 fi
                 ENV_FILE="--env-file=${ENV_FILE}"
